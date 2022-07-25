@@ -145,7 +145,7 @@ JWT_REFRESH_TOKEN_EXPIRATION_TIME=30d
 }
 ```
 
-![회원가입](./image/%ED%9A%8C%EC%9B%90%EA%B0%80%EC%9E%85_%EC%B5%9C%EC%A2%85.gif)
+![회원가입](./image/%ED%9A%8C%EC%9B%90%EA%B0%80%EC%9E%85.gif)
 
 </div>
 </details>
