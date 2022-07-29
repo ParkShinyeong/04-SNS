@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { classToPlain } from 'class-transformer';
 import { User } from 'src/user/entities/user.entity';
@@ -87,7 +88,7 @@ describe('ArticleService', () => {
   let article: Article;
   let user1: User;
   let user2: User;
-  let createArticleDto: CreateArticleDTO;
+  // let createArticleDto: CreateArticleDTO;
 
   beforeEach(() => {
     id = 1;
@@ -131,5 +132,61 @@ describe('ArticleService', () => {
       comment: [],
       articleHashtag: [],
     };
+  });
+
+  describe('게시글 상세 요청', () => {
+    it('기본 테스트', () => {
+      expect(articleService.getArticle).toBeDefined();
+    });
+
+    it('쿼리빌더 호출 카운팅', async () => {
+      await articleService.getArticle(1);
+      expect(articleRepository.createQueryBuilder).toHaveBeenCalledTimes(1);
+      expect(
+        articleRepository.createQueryBuilder().select,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        articleRepository.createQueryBuilder().addSelect,
+      ).toHaveBeenCalledTimes(3);
+      expect(
+        articleRepository.createQueryBuilder().leftJoin,
+      ).toHaveBeenCalledTimes(3);
+      expect(
+        articleRepository.createQueryBuilder().where,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        articleRepository.createQueryBuilder().getOne,
+      ).toHaveBeenCalledTimes(1);
+    });
+
+    it('게시글 상세 요청 성공', async () => {
+      jest
+        .spyOn(articleRepository.createQueryBuilder(), 'getOne')
+        .mockResolvedValue(article);
+
+      const result = await articleService.getArticle(1);
+
+      expect(articleRepository.createQueryBuilder().getOne).toHaveBeenCalled();
+      expect(result['title']).toStrictEqual(article.title);
+      expect(result['content']).toStrictEqual(article.content);
+      expect(result['totalView']).toStrictEqual(1);
+      expect(result['totalLike']).toStrictEqual(0);
+      expect(result['hashtag']).toHaveLength(4);
+    });
+
+    it('존재하지 않는 게시글 상세요청 시', async () => {
+      jest
+        .spyOn(articleRepository.createQueryBuilder(), 'getOne')
+        .mockResolvedValue(article);
+
+      try {
+        await articleService.getArticle(100);
+        expect(
+          articleRepository.createQueryBuilder().getOne,
+        ).toHaveBeenCalled();
+      } catch (error) {
+        expect(error).toBeInstanceOf(NotFoundException);
+      }
+    });
   });
 });
