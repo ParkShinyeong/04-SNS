@@ -1,7 +1,7 @@
 ---
 name: Issue Task Card
 about: Describe this issue template's purpose here.
-title: ''
+title: "[Task] "
 labels: ''
 assignees: ParkShinyeong
 
