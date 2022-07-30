@@ -1,4 +1,7 @@
-import { NotFoundException } from '@nestjs/common';
+import {
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { classToPlain } from 'class-transformer';
 import { User } from 'src/user/entities/user.entity';
@@ -8,6 +11,7 @@ import { Article } from '../entities/article.entity';
 import { ArticleHashtag } from '../entities/article_hashtag.entity';
 import { Hashtag } from '../entities/hashtag.entity';
 import { ArticleService } from '../service/article.service';
+import { ArticleList } from './articleList.mockdata';
 
 type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
 
@@ -186,6 +190,42 @@ describe('ArticleService', () => {
         ).toHaveBeenCalled();
       } catch (error) {
         expect(error).toBeInstanceOf(NotFoundException);
+      }
+    });
+  });
+
+  describe('게시글 생성 요청', () => {
+    it('호출 카운팅', async () => {
+      await articleService.createArticle(article, user1);
+      const hashtags = await articleService.getHashtag(article.hashtag);
+      const totalHashtag = hashtags.length;
+      expect(articleRepository.create).toHaveBeenCalledTimes(1);
+      expect(articleRepository.save).toHaveBeenCalledTimes(1);
+      expect(articleHashtagRepository.insert).toHaveBeenCalledTimes(
+        totalHashtag,
+      );
+      expect(hashtagRepository.findOne).toHaveBeenCalledTimes(totalHashtag);
+    });
+
+    it('게시글 생성 요청 성공', async () => {
+      jest.spyOn(articleRepository, 'save').mockResolvedValue(article);
+      const result = await articleService.createArticle(article, user1);
+      const hashtags = await articleService.getHashtag(article.hashtag);
+      const totalHashtag = hashtags.length;
+      expect(result['title']).toStrictEqual(article.title);
+      expect(result['content']).toStrictEqual(article.content);
+      expect(result['totalView']).toStrictEqual(0);
+      expect(result['totalLike']).toStrictEqual(0);
+      expect(result['hashtag']).toHaveLength(totalHashtag);
+    });
+
+    it('게시글 생성 요청 시 필수 인자가 없을 경우', async () => {
+      jest.spyOn(articleRepository, 'save').mockResolvedValue(article);
+      delete article.title;
+      try {
+        await articleService.createArticle(article, user1);
+      } catch (error) {
+        expect(error).toBeInstanceOf(InternalServerErrorException);
       }
     });
   });
