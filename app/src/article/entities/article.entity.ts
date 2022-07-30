@@ -102,11 +102,11 @@ export class Article {
   @JoinColumn()
   like: Like[];
 
-  @OneToMany(() => ArticleView, (articleView) => articleView.article, {
-    cascade: true,
-  })
-  @JoinColumn()
-  articleView: ArticleView[];
+  // @OneToMany(() => ArticleView, (articleView) => articleView.article, {
+  //   cascade: true,
+  // })
+  // @JoinColumn()
+  // articleView: ArticleView[];
 
   @OneToMany(() => Comment, (comment) => comment.article, {
     nullable: true,
