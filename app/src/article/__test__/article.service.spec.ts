@@ -1,6 +1,7 @@
 import {
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { classToPlain } from 'class-transformer';
@@ -226,6 +227,34 @@ describe('ArticleService', () => {
         await articleService.createArticle(article, user1);
       } catch (error) {
         expect(error).toBeInstanceOf(InternalServerErrorException);
+      }
+    });
+  });
+
+  describe('게시글 삭제 요청', () => {
+    it('호출 카운팅', async () => {
+      try {
+        await articleService.deleteArticle(article.id, user1);
+        expect(articleRepository.softDelete).toHaveBeenCalledTimes(1);
+      } catch (e) {}
+    });
+
+    it('게시글 삭제 요청 성공', async () => {
+      jest
+        .spyOn(articleRepository, 'softDelete')
+        .mockResolvedValue({ affected: 1 });
+      const result = await articleService.deleteArticle(article.id, user1);
+      expect(result['id']).toStrictEqual(article.id);
+    });
+
+    it('게시글 삭제 요청 실패', async () => {
+      jest
+        .spyOn(articleRepository, 'softDelete')
+        .mockResolvedValue({ affected: 0 });
+      try {
+        await articleService.deleteArticle(article.id, user2);
+      } catch (e) {
+        expect(e).toBeInstanceOf(UnauthorizedException);
       }
     });
   });
