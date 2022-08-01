@@ -8,6 +8,7 @@ import { classToPlain } from 'class-transformer';
 import { User } from 'src/user/entities/user.entity';
 import { DataSource, QueryBuilder, Repository } from 'typeorm';
 import { CreateArticleDTO } from '../dto/createArticle.dto';
+import { UpdateArticleDTO } from '../dto/updateArticle.dto';
 import { Article } from '../entities/article.entity';
 import { ArticleHashtag } from '../entities/article_hashtag.entity';
 import { Hashtag } from '../entities/hashtag.entity';
@@ -93,7 +94,7 @@ describe('ArticleService', () => {
   let article: Article;
   let user1: User;
   let user2: User;
-  // let createArticleDto: CreateArticleDTO;
+  let updateArticleDto: UpdateArticleDTO;
 
   beforeEach(() => {
     id = 1;
@@ -136,6 +137,12 @@ describe('ArticleService', () => {
       like: [],
       comment: [],
       articleHashtag: [],
+    };
+
+    updateArticleDto = {
+      title: 'NEST JS 사용',
+      content: 'Nest JS를 사용해보겠습니다',
+      hashtag: '#성장,#공부,#스터디',
     };
   });
 
@@ -253,6 +260,56 @@ describe('ArticleService', () => {
         .mockResolvedValue({ affected: 0 });
       try {
         await articleService.deleteArticle(article.id, user2);
+      } catch (e) {
+        expect(e).toBeInstanceOf(UnauthorizedException);
+      }
+    });
+  });
+
+  describe('게시글 수정 요청', () => {
+    it('호출 카운팅', async () => {
+      await articleService.updateArticle(1, updateArticleDto, user1);
+
+      expect(articleRepository.createQueryBuilder).toHaveBeenCalledTimes(1);
+      expect(
+        articleRepository.createQueryBuilder().update,
+      ).toHaveBeenCalledTimes(1);
+      expect(articleRepository.createQueryBuilder().set).toHaveBeenCalledTimes(
+        1,
+      );
+      expect(
+        articleRepository.createQueryBuilder().where,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        articleRepository.createQueryBuilder().andWhere,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        articleRepository.createQueryBuilder().execute,
+      ).toHaveBeenCalledTimes(1);
+    });
+
+    it('게시글 수정 요청 성공', async () => {
+      jest
+        .spyOn(articleRepository.createQueryBuilder(), 'execute')
+        .mockResolvedValue(article);
+
+      const result = await articleService.updateArticle(
+        1,
+        updateArticleDto,
+        user1,
+      );
+      expect(result['title']).toStrictEqual(article.title);
+      expect(result['content']).toStrictEqual(article.content);
+      expect(result['hashtag']).toStrictEqual(article.hashtag);
+    });
+
+    it('게시글 수정 요청 실패', async () => {
+      jest
+        .spyOn(articleRepository.createQueryBuilder(), 'execute')
+        .mockResolvedValue(article);
+
+      try {
+        await articleService.updateArticle(1, updateArticleDto, user2);
       } catch (e) {
         expect(e).toBeInstanceOf(UnauthorizedException);
       }
